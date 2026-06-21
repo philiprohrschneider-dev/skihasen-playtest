@@ -225,7 +225,7 @@ function renderDashboard(){
       )
     ),
     h('div',{className:'grid3',style:{marginBottom:'18px'}},
-      sBox('Sessions',sessions.length),
+      (()=>{const el=h('div',{className:'stat-box clickable'},h('div',{className:'stat-val'},String(sessions.length)),h('div',{className:'stat-lbl'},'Sessions'),h('div',{style:{fontSize:'11px',color:'var(--muted)',marginTop:'4px'}},'Alle anzeigen →'));el.onclick=()=>setState({page:'sessions',subpage:null});return el;})(),
       sBoxClickable('Ø Dauer (Min.)',avgDur||'—','stats-duration'),
       sBoxClickable('Ø Runden',avgRnd||'—','stats-rounds')
     ),
@@ -485,6 +485,7 @@ function renderSessionDetail(session){
 }
 
 setTimeout(()=>{
+  if(state.page!=='sessions'||state.subpage!=='session-detail')return;
   const qrContainer=document.getElementById('qr-container');
   const feedbackList=document.getElementById('feedback-list');
   if(!qrContainer)return;
