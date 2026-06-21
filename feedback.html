@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback – Pullenprügelei Playtest</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f7f5ff;--surface:#ffffff;--surface2:#f0eeff;--border:#e0d8ff;--pink:#f03e8a;--purple:#9b5de5;--green:#3dbf6e;--text:#1a1535;--muted:#9990bb;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;padding:24px 16px 48px;}
+  body::before{content:'';display:block;height:5px;background:linear-gradient(90deg,#f03e8a,#f5c800,#3dbf6e,#3a8fe8,#9b5de5,#f03e8a);position:fixed;top:0;left:0;right:0;z-index:100;}
+  .wrap{max-width:480px;margin:0 auto;padding-top:16px;}
+  .header{text-align:center;margin-bottom:28px;}
+  .header-icon{font-size:40px;margin-bottom:8px;}
+  .header-title{font-size:22px;font-weight:900;color:var(--purple);}
+  .header-sub{font-size:14px;color:var(--muted);margin-top:4px;}
+  .card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;}
+  .lbl{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+  input,textarea{background:var(--surface2);border:2px solid var(--border);border-radius:10px;color:var(--text);padding:10px 14px;font-family:'Nunito',sans-serif;font-size:15px;width:100%;outline:none;}
+  input:focus,textarea:focus{border-color:var(--purple);}
+  textarea{resize:vertical;min-height:100px;margin-top:0;}
+  .field{margin-bottom:16px;}
+  .stars{display:flex;gap:8px;margin-top:4px;}
+  .star{font-size:32px;cursor:pointer;transition:transform .1s;user-select:none;}
+  .star:hover{transform:scale(1.2);}
+  .btn{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;border:none;border-radius:10px;padding:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;width:100%;margin-top:4px;}
+  .success{text-align:center;padding:48px 24px;}
+  .success-icon{font-size:56px;margin-bottom:16px;}
+  .success-title{font-size:20px;font-weight:900;color:var(--purple);margin-bottom:8px;}
+  .success-sub{font-size:14px;color:var(--muted);}
+  .error{background:#ffe0f0;border:2px solid var(--pink);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--pink);margin-bottom:16px;display:none;}
+  .loading{text-align:center;padding:48px;color:var(--muted);font-size:14px;font-weight:700;}
+  .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="app"><div class="loading"><div class="spinner"></div>Lade Session…</div></div>
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,doc,getDoc,updateDoc,arrayUnion,setDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig={apiKey:"AIzaSyAEk-r4ph5FouxJZUPaIRZ71QNNEyFltYY",authDomain:"playtest-tracker-3fc32.firebaseapp.com",projectId:"playtest-tracker-3fc32",storageBucket:"playtest-tracker-3fc32.firebasestorage.app",messagingSenderId:"556831888457",appId:"1:556831888457:web:36c475805af3e3880fdb98"};
+const fbApp=initializeApp(firebaseConfig);
+const db=getFirestore(fbApp);
+
+const params=new URLSearchParams(location.search);
+const sessionId=params.get('id');
+const app=document.getElementById('app');
+
+if(!sessionId){
+  app.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--muted);">Kein Session-Link gefunden.</div>';
+} else {
+  // Load session info
+  const snap=await getDoc(doc(db,'tracker','main'));
+  const data=snap.exists()?JSON.parse(snap.data().payload):null;
+  const session=data?.sessions?.find(s=>s.id===sessionId);
+
+  if(!session){
+    app.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--muted);">Session nicht gefunden.</div>';
+  } else {
+    let rating=0;
+    renderForm(session);
+  }
+
+  function renderForm(session){
+    let rating=0;
+    app.innerHTML=`
+      <div class="header">
+        <div class="header-icon">🐰⛷️</div>
+        <div class="header-title">Pullenprügelei Playtest</div>
+        <div class="header-sub">Session vom ${session.date} · ${session.playerCount} Spieler</div>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label class="lbl">Dein Name (optional)</label>
+          <input type="text" id="fb-name" placeholder="z.B. Flo">
+        </div>
+        <div class="field">
+          <label class="lbl">Spaßfaktor</label>
+          <div class="stars" id="stars">
+            <span class="star" data-val="1">☆</span>
+            <span class="star" data-val="2">☆</span>
+            <span class="star" data-val="3">☆</span>
+            <span class="star" data-val="4">☆</span>
+            <span class="star" data-val="5">☆</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl">Kommentar</label>
+          <textarea id="fb-comment" placeholder="Was hat gut geklappt? Was kann besser werden?"></textarea>
+        </div>
+        <div class="error" id="fb-error">Bitte vergib mindestens einen Stern!</div>
+        <button class="btn" id="fb-submit">Feedback absenden 🎲</button>
+      </div>`;
+
+    // Stars
+    const stars=document.querySelectorAll('.star');
+    function setRating(val){
+      rating=val;
+      stars.forEach(s=>{s.textContent=Number(s.dataset.val)<=val?'★':'☆';});
+    }
+    stars.forEach(s=>{
+      s.onclick=()=>setRating(Number(s.dataset.val));
+      s.onmouseover=()=>stars.forEach(x=>{x.textContent=Number(x.dataset.val)<=Number(s.dataset.val)?'★':'☆';});
+      s.onmouseout=()=>setRating(rating);
+    });
+
+    document.getElementById('fb-submit').onclick=async()=>{
+      const errEl=document.getElementById('fb-error');
+      if(!rating){errEl.style.display='block';return;}
+      errEl.style.display='none';
+      const btn=document.getElementById('fb-submit');
+      btn.textContent='Speichert…';btn.disabled=true;
+      try{
+        const entry={
+          name:document.getElementById('fb-name').value.trim()||'Anonym',
+          rating,
+          comment:document.getElementById('fb-comment').value.trim(),
+          timestamp:Date.now(),
+        };
+        const fbDoc=doc(db,'feedback',sessionId);
+        const existing=await getDoc(fbDoc);
+        if(existing.exists()){
+          await updateDoc(fbDoc,{entries:arrayUnion(entry)});
+        } else {
+          await setDoc(fbDoc,{entries:[entry]});
+        }
+        app.innerHTML=`
+          <div class="success">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">Danke für dein Feedback!</div>
+            <div class="success-sub">Deine Meinung hilft uns das Spiel besser zu machen.</div>
+          </div>`;
+      } catch(e){
+        btn.textContent='Feedback absenden 🎲';btn.disabled=false;
+        alert('Fehler beim Speichern. Bitte nochmal versuchen.');
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
