@@ -473,7 +473,7 @@ function renderSessionDetail(session){
     h('div',{className:'card'},
       h('div',{className:'card-title'},'📋 FEEDBACK EINSAMMELN'),
       h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'12px',marginBottom:'16px'}},
-        h('div',{id:'qr-container',style:{background:'white',padding:'12px',borderRadius:'14px',border:'2px solid var(--border)',boxShadow:'0 4px 16px rgba(155,93,229,0.15)'}}),
+        h('div',{id:'qr-container',style:{background:'white',padding:'12px',borderRadius:'14px',border:'2px solid var(--border)',boxShadow:'0 4px 16px rgba(155,93,229,0.15)',minWidth:'244px',minHeight:'244px',display:'flex',alignItems:'center',justifyContent:'center'}}),
         h('div',{style:{textAlign:'center'}},
           h('div',{style:{fontSize:'14px',fontWeight:'700',marginBottom:'4px'}},'Scannen & Feedback geben!'),
           h('div',{style:{fontSize:'12px',color:'var(--muted)',marginBottom:'10px'}},'Kein Login nötig – einfach scannen'),
