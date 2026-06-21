@@ -425,6 +425,8 @@ function renderSessionsPage(){
 function renderSessionDetail(session){
   if(state.editingSession===session.id)return renderEditSessionForm(session);
   const hasSpecial=session.modules?.includes('Spezialfähigkeiten');
+  const feedbackUrl=`${location.origin}/feedback?id=${session.id}`;
+
   return h('div',{},
     h('div',{style:{display:'flex',gap:'10px',alignItems:'center',marginBottom:'18px',flexWrap:'wrap'}},
       h('div',{className:'back-btn',onclick:()=>setState({subpage:null,subpageArg:null})},'← Zurück'),
@@ -466,9 +468,65 @@ function renderSessionDetail(session){
           ...slot.abilities.map(a=>mkTag('tag-gold',a))
         ):null
       ))
-    ):null
+    ):null,
+    // QR Code & Feedback
+    h('div',{className:'card'},
+      h('div',{className:'card-title'},'📋 FEEDBACK'),
+      h('div',{style:{display:'flex',gap:'16px',alignItems:'flex-start',flexWrap:'wrap'}},
+        h('div',{id:'qr-container',style:{background:'white',padding:'10px',borderRadius:'8px',flexShrink:'0'}}),
+        h('div',{style:{flex:'1',minWidth:'160px'}},
+          h('div',{style:{fontSize:'14px',marginBottom:'8px'}},'Mitspieler scannen diesen QR-Code um Feedback zu geben.'),
+          h('div',{style:{fontSize:'12px',color:'var(--muted)',wordBreak:'break-all',marginBottom:'12px'}},feedbackUrl),
+          h('button',{className:'btn-sm',onclick:()=>navigator.clipboard?.writeText(feedbackUrl).then(()=>alert('Link kopiert!'))},'🔗 Link kopieren')
+        )
+      ),
+      h('div',{id:'feedback-list',style:{marginTop:'16px'}})
+    )
   );
 }
+// Generate QR and load feedback after render
+setTimeout(()=>{
+  const qrContainer=document.getElementById('qr-container');
+  const feedbackList=document.getElementById('feedback-list');
+  if(!qrContainer)return;
+  // Load QR code library and render
+  if(!window.QRCode){
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    script.onload=()=>renderQR();
+    document.head.appendChild(script);
+  } else renderQR();
+  function renderQR(){
+    const session=state.data.sessions.find(s=>s.id===state.subpageArg);
+    if(!session||!qrContainer)return;
+    qrContainer.innerHTML='';
+    new QRCode(qrContainer,{text:`${location.origin}/feedback?id=${session.id}`,width:120,height:120,colorDark:'#1a1535',colorLight:'#ffffff'});
+    loadFeedback(session.id);
+  }
+  async function loadFeedback(sessionId){
+    if(!feedbackList)return;
+    try{
+      const{getFirestore,doc,getDoc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const db=getFirestore();
+      const snap=await getDoc(doc(db,'feedback',sessionId));
+      if(!snap.exists()||!snap.data().entries?.length){
+        feedbackList.innerHTML='<div style="color:var(--muted);font-size:14px;">Noch kein Feedback eingegangen.</div>';
+        return;
+      }
+      const entries=snap.data().entries;
+      feedbackList.innerHTML=`<div class="card-title">EINGEGANGENES FEEDBACK (${entries.length})</div>`+
+        entries.map(e=>`
+          <div style="border-bottom:2px solid var(--border);padding:12px 0;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-weight:700;font-size:14px;">${e.name||'Anonym'}</span>
+              <span style="color:var(--accent2);font-size:16px;">${'★'.repeat(e.rating||0)}${'☆'.repeat(5-(e.rating||0))}</span>
+            </div>
+            ${e.comment?`<div style="font-size:14px;color:var(--muted2);line-height:1.5;">${e.comment}</div>`:''}
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">${e.timestamp?new Date(e.timestamp).toLocaleString('de-DE'):''}</div>
+          </div>`).join('');
+    }catch(e){console.error(e);}
+  }
+},100);
 
 function iF(label,value){return h('div',{className:'info-pair'},h('div',{className:'info-lbl'},label),h('div',{className:'info-val'},String(value??'—')));}
 
