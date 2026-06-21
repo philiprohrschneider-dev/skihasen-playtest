@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Playtest">
+<title>Playtest Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f5ff;--surface:#ffffff;--surface2:#f0eeff;--border:#e0d8ff;
+    --pink:#f03e8a;--yellow:#f5c800;--green:#3dbf6e;--blue:#3a8fe8;--purple:#9b5de5;
+    --accent:#f03e8a;--accent2:#f5c800;--red:#f03e8a;--text:#1a1535;--muted:#9990bb;--muted2:#6e64a0;
+    --shadow:0 2px 12px rgba(155,93,229,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;}
+  ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  #app{display:flex;flex-direction:column;min-height:100vh;}
+  body::before{content:'';display:block;height:5px;background:linear-gradient(90deg,#f03e8a,#f5c800,#3dbf6e,#3a8fe8,#9b5de5,#f03e8a);position:fixed;top:0;left:0;right:0;z-index:200;}
+  nav{background:#fff;border-bottom:2px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:2px;flex-wrap:wrap;position:sticky;top:5px;z-index:100;box-shadow:var(--shadow);}
+  .nav-brand{font-size:17px;font-weight:900;color:var(--pink);padding:13px 14px 13px 0;margin-right:10px;border-right:2px solid var(--border);}
+  .nav-btn{background:none;border:none;border-bottom:3px solid transparent;color:var(--muted);padding:13px 13px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;transition:all .15s;white-space:nowrap;}
+  .nav-btn:hover{color:var(--text);}.nav-btn.active{color:var(--purple);border-bottom-color:var(--purple);}
+  .nav-status{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);transition:color .3s;}
+  .nav-status.ok{color:var(--green);}.nav-status.saving{color:var(--yellow);}.nav-status.err{color:var(--red);}
+  main{flex:1;padding:24px 16px 48px;max-width:860px;margin:0 auto;width:100%;}
+  .card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card-title{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--purple);margin-bottom:14px;text-transform:uppercase;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:500px){.grid2,.grid3{grid-template-columns:1fr 1fr;}}
+  .stat-box{background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:14px 12px;text-align:center;}
+  .stat-val{font-size:28px;font-weight:900;color:var(--pink);line-height:1;}
+  .stat-lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:5px;}
+  label.lbl{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+  input[type=text],input[type=number],input[type=date],select,textarea{background:var(--surface2);border:2px solid var(--border);border-radius:10px;color:var(--text);padding:9px 12px;font-family:'Nunito',sans-serif;font-size:15px;width:100%;outline:none;transition:border-color .2s;}
+  input:focus,select:focus,textarea:focus{border-color:var(--purple);}
+  select{background:var(--surface2);}textarea{resize:vertical;min-height:80px;}
+  .field{margin-bottom:14px;}
+  .btn-primary{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:opacity .2s;box-shadow:0 3px 10px rgba(240,62,138,0.25);}
+  .btn-primary:hover{opacity:.88;}
+  .btn-secondary{background:none;color:var(--muted2);border:2px solid var(--border);border-radius:10px;padding:9px 16px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .btn-replay{background:linear-gradient(135deg,#3a8fe8,#9b5de5);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(58,143,232,0.25);}
+  .btn-danger{background:none;color:var(--red);border:2px solid #ffd0e6;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;}
+  .btn-sm{background:var(--surface2);color:var(--text);border:2px solid var(--border);border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Nunito',sans-serif;}
+  .btn-sm:hover{border-color:var(--purple);color:var(--purple);}.btn-sm.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .btn-other{background:#fff3e0;color:#e07800;border:2px solid #ffc966;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:6px;}
+  .btn-add-inline{background:#e8f5e9;color:#2e7d32;border:2px solid #81c784;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;}
+  .chip{display:inline-block;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;border:2px solid var(--border);color:var(--muted);cursor:pointer;margin:3px 4px 3px 0;transition:all .15s;user-select:none;}
+  .chip.active{border-color:var(--pink);background:#ffe0f0;color:var(--pink);}
+  .chip.other-active{border-color:#e07800;background:#fff3e0;color:#e07800;}
+  .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;margin:2px 3px 2px 0;}
+  .tag-gold{background:#fff8d0;color:#b8920a;border:2px solid #f5e070;}
+  .tag-accent{background:#ffe0f0;color:var(--pink);border:2px solid #ffb3d6;}
+  .tag-green{background:#d6f5e4;color:#1e8a4a;border:2px solid #7adba8;}
+  .tag-blue{background:#ddeeff;color:#1a5fa8;border:2px solid #90c0f5;}
+  .tag-inactive{background:#f5f5f5;color:#aaa;border:2px solid #ddd;}
+  .session-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:13px 16px;margin-bottom:9px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);}
+  .session-card:hover{border-color:var(--pink);transform:translateY(-1px);box-shadow:0 4px 16px rgba(240,62,138,0.12);}
+  .session-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;}
+  .session-meta{display:flex;gap:12px;font-size:13px;font-weight:600;color:var(--muted2);flex-wrap:wrap;}
+  .rank-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:2px solid var(--border);}
+  .rank-num{font-size:18px;font-weight:900;color:var(--muted);width:28px;text-align:center;}
+  .rank-num.gold{color:#e6a800;}.rank-num.silver{color:#9090b8;}.rank-num.bronze{color:#c47a3a;}
+  .rank-name{flex:1;font-size:15px;font-weight:700;}
+  .rank-bar-wrap{width:100px;height:8px;background:var(--border);border-radius:4px;}
+  .rank-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--pink),var(--purple));transition:width .4s;}
+  .rank-score{font-size:14px;font-weight:900;color:var(--pink);min-width:48px;text-align:right;}
+  .rank-sub{font-size:11px;color:var(--muted);font-weight:600;}
+  .player-slot{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .top3-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:2px solid var(--border);}
+  .top3-medal{font-size:18px;width:24px;}.top3-name{flex:1;font-size:15px;font-weight:700;}.top3-count{font-weight:900;color:var(--pink);font-size:14px;}
+  .info-pair{margin-bottom:10px;}
+  .info-lbl{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+  .info-val{font-size:15px;font-weight:600;}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--muted2);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:18px;}
+  .back-btn:hover{color:var(--pink);}
+  .tab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+  .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+  .page-title{font-size:20px;font-weight:900;color:var(--purple);}
+  .empty{text-align:center;padding:52px 24px;}
+  .empty-icon{font-size:48px;margin-bottom:12px;}.empty-text{color:var(--muted);margin-bottom:18px;font-size:15px;font-weight:600;}
+  .stat-box.clickable{cursor:pointer;transition:all .2s;}.stat-box.clickable:hover{border-color:var(--pink);transform:translateY(-1px);}
+  .loading{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:16px;color:var(--muted);font-size:14px;font-weight:800;letter-spacing:.1em;}
+  .spinner{width:36px;height:36px;border:4px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .inactive-label{font-size:11px;color:#aaa;margin-left:6px;}
+  .other-panel{background:#fff8ee;border:2px solid #ffc966;border-radius:10px;padding:10px 12px;margin-top:8px;}
+  .form-draft-badge{font-size:11px;font-weight:800;background:#fff3e0;color:#e07800;border:2px solid #ffc966;border-radius:20px;padding:2px 10px;margin-left:8px;}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><div class="spinner"></div>🐰 VERBINDE MIT FIREBASE…</div></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,doc,getDoc,setDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig={apiKey:"AIzaSyAEk-r4ph5FouxJZUPaIRZ71QNNEyFltYY",authDomain:"playtest-tracker-3fc32.firebaseapp.com",projectId:"playtest-tracker-3fc32",storageBucket:"playtest-tracker-3fc32.firebasestorage.app",messagingSenderId:"556831888457",appId:"1:556831888457:web:36c475805af3e3880fdb98"};
+const fbApp=initializeApp(firebaseConfig);
+const db=getFirestore(fbApp);
+const DATA_DOC=doc(db,'tracker','main');
+let saveTimeout=null;
+
+async function loadFromFirebase(){try{const snap=await getDoc(DATA_DOC);if(snap.exists())return snap.data().payload?JSON.parse(snap.data().payload):null;return null;}catch(e){console.error(e);return null;}}
+async function saveToFirebase(data){try{await setDoc(DATA_DOC,{payload:JSON.stringify(data),updatedAt:Date.now()});return true;}catch(e){console.error(e);return false;}}
+
+const DEFAULT_DATA={
+  sessions:[],
+  characters:[{id:'c1',name:'Krieger',active:true},{id:'c2',name:'Magier',active:true},{id:'c3',name:'Schurke',active:true}],
+  abilities:[{id:'a1',name:'Schildwall',active:true},{id:'a2',name:'Feuerball',active:true},{id:'a3',name:'Schattensprung',active:true},{id:'a4',name:'Heilung',active:true}],
+  characterAbilities:{c1:['a1','a4'],c2:['a2','a4'],c3:['a3']},
+  players:[{id:'p1',name:'Ich',active:true}],
+  versions:[{id:'v1',name:'Basisspiel',active:true},{id:'v2',name:'Spezialfähigkeiten',active:true},{id:'v3',name:'Ereigniskarten',active:true}],
+  testTypes:[{id:'t1',name:'Selbst mitgespielt',active:true},{id:'t2',name:'Blind Test',active:true},{id:'t3',name:'Beobachtet',active:true}],
+};
+
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let state={
+  data:null,page:'dashboard',subpage:null,subpageArg:null,
+  adminTab:'characters',showNewSession:false,replaySession:null,
+  editingSession:null,saveStatus:'ok',
+  // Preserved form draft (lives as long as page is open)
+  formDraft:null,
+};
+
+let isPushingState=false;
+function setState(patch){
+  Object.assign(state,patch);
+  render();
+}
+
+// Android back button via simple history stack
+const navStack=[];
+function navPush(){navStack.push({page:state.page,subpage:state.subpage,subpageArg:state.subpageArg,showNewSession:state.showNewSession,editingSession:state.editingSession,adminTab:state.adminTab});}
+
+window.addEventListener('popstate',()=>{
+  if(isPushingState)return;
+  const prev=navStack.pop();
+  if(prev){Object.assign(state,prev);render();}
+});
+function persist(newData){
+  state.data=newData;state.saveStatus='saving';render();
+  clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(async()=>{const ok=await saveToFirebase(newData);state.saveStatus=ok?'ok':'err';render();},600);
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────────
+function getCharWins(){
+  const counts={};
+  state.data.sessions.forEach(s=>{const w=s.playerSlots?.find(p=>p.isWinner);if(w?.character)counts[w.character]=(counts[w.character]||0)+1;});
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+}
+function getAbilityWins(){
+  const counts={};
+  state.data.sessions.forEach(s=>{
+    if(!s.modules?.includes('Spezialfähigkeiten'))return;
+    s.playerSlots?.find(p=>p.isWinner)?.abilities?.forEach(a=>{counts[a]=(counts[a]||0)+1;});
+  });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+}
+
+// Player strength: per session won, award (playerCount * log2(playerCount)) points
+// Normalize by total sessions played → gives win-rate weighted by difficulty
+function getPlayerStrength(){
+  const played={},score={};
+  state.data.sessions.forEach(s=>{
+    const n=Number(s.playerCount)||2;
+    const pts=n*Math.log2(n);
+    s.playerSlots?.forEach(slot=>{
+      if(!slot.player||slot.anonymous)return;
+      played[slot.player]=(played[slot.player]||0)+1;
+      if(slot.isWinner)score[slot.player]=(score[slot.player]||0)+pts;
+    });
+  });
+  return Object.entries(played).map(([name,games])=>{
+    const raw=score[name]||0;
+    // normalize: divide by max possible (all wins in hardest games) → multiply by 100
+    const maxPossible=games*8*Math.log2(8); // theoretical max if always 8-player wins
+    const strength=Math.round((raw/maxPossible)*100);
+    return{name,games,wins:state.data.sessions.filter(s=>s.playerSlots?.find(p=>p.player===name&&p.isWinner)).length,strength};
+  }).sort((a,b)=>b.strength-a.strength);
+}
+
+// ── DOM helper ─────────────────────────────────────────────────────────────────
+function h(tag,attrs,...children){
+  const el=document.createElement(tag);
+  if(attrs)Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='className')el.className=v;
+    else if(k.startsWith('on'))el[k.toLowerCase()]=v;
+    else if(k==='style'&&typeof v==='object')Object.assign(el.style,v);
+    else el.setAttribute(k,v);
+  });
+  children.flat(Infinity).forEach(c=>{if(c==null||c===false)return;el.appendChild(typeof c==='string'?document.createTextNode(c):c);});
+  return el;
+}
+function mkTag(cls,text){return h('span',{className:`tag ${cls}`},text);}
+function medal(i){return['🥇','🥈','🥉'][i]||`${i+1}.`;}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const{sessions}=state.data;
+  const avgDur=sessions.length?Math.round(sessions.reduce((a,s)=>a+(Number(s.duration)||0),0)/sessions.length):0;
+  const avgRnd=sessions.length?(sessions.reduce((a,s)=>a+(Number(s.rounds)||0),0)/sessions.length).toFixed(1):0;
+  const charWins=getCharWins(),abilWins=getAbilityWins(),playerStr=getPlayerStrength();
+  const modCounts={};sessions.forEach(s=>s.modules?.forEach(m=>{modCounts[m]=(modCounts[m]||0)+1;}));
+  const recent=[...sessions].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  const hasDraft=!!state.formDraft;
+
+  return h('div',{},
+    h('div',{className:'page-header'},
+      h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},
+        h('div',{className:'page-title'},'ÜBERSICHT'),
+        hasDraft?h('span',{className:'form-draft-badge'},'Entwurf offen'):null
+      ),
+      h('div',{style:{display:'flex',gap:'8px',flexWrap:'wrap'}},
+        hasDraft?h('button',{className:'btn-secondary',onclick:()=>setState({page:'sessions',showNewSession:true})},'✏ Weiter ausfüllen'):null,
+        h('button',{className:'btn-primary',onclick:()=>setState({page:'sessions',showNewSession:true,formDraft:null})},'+ Neues Spiel')
+      )
+    ),
+    h('div',{className:'grid3',style:{marginBottom:'18px'}},
+      sBox('Sessions',sessions.length),
+      sBoxClickable('Ø Dauer (Min.)',avgDur||'—','stats-duration'),
+      sBoxClickable('Ø Runden',avgRnd||'—','stats-rounds')
+    ),
+    Object.keys(modCounts).length?h('div',{className:'card',style:{marginBottom:'14px'}},
+      h('div',{className:'card-title'},'MODULE GESPIELT'),
+      h('div',{style:{display:'flex',flexWrap:'wrap',gap:'10px'}},
+        ...Object.entries(modCounts).map(([name,count])=>h('div',{className:'stat-box',style:{flex:'1 1 100px'}},
+          h('div',{className:'stat-val'},`${count}×`),h('div',{className:'stat-lbl'},name)
+        ))
+      )
+    ):null,
+    h('div',{className:'grid2',style:{marginBottom:'14px'}},
+      top3Card('🏆 TOP CHARAKTERE',charWins.slice(0,3),'ranking-char'),
+      top3Card('✨ TOP FÄHIGKEITEN',abilWins.slice(0,3),'ranking-ability')
+    ),
+    playerStr.length>0?h('div',{className:'card',style:{marginBottom:'14px',cursor:'pointer'},onclick:()=>{navPush();history.pushState({},'');setState({subpage:'ranking-player'});}},
+      h('div',{className:'card-title'},'💪 TOP SPIELER (STÄRKE)'),
+      ...playerStr.slice(0,3).map(({name,strength,wins,games},i)=>h('div',{className:'top3-row'},
+        h('div',{className:'top3-medal'},medal(i)),
+        h('div',{className:'top3-name'},name),
+        h('div',{style:{fontSize:'11px',color:'var(--muted)',marginRight:'8px'}},`${wins}/${games}`),
+        h('div',{className:'top3-count'},`${strength}`)
+      )),
+      h('div',{style:{fontSize:'12px',color:'var(--muted)',marginTop:'10px'}},'Alle anzeigen →')
+    ):null,
+    h('div',{className:'card'},
+      h('div',{className:'card-title'},'LETZTE SESSIONS'),
+      recent.length===0
+        ?h('div',{style:{color:'var(--muted)',fontSize:'15px'}},'Noch keine Sessions. ',h('span',{style:{color:'var(--accent)',cursor:'pointer'},onclick:()=>setState({page:'sessions',showNewSession:true})},'Jetzt starten →'))
+        :h('div',{},...recent.map(s=>{const el=sessionRow(s,true);el.onclick=()=>{navPush();history.pushState({},'');setState({page:'sessions',subpage:'session-detail',subpageArg:s.id});};return el;}))
+    )
+  );
+}
+
+function sBox(label,value){return h('div',{className:'stat-box'},h('div',{className:'stat-val'},String(value)),h('div',{className:'stat-lbl'},label));}
+function sBoxClickable(label,value,subpage){
+  const el=h('div',{className:'stat-box clickable'},
+    h('div',{className:'stat-val'},String(value)),
+    h('div',{className:'stat-lbl'},label),
+    h('div',{style:{fontSize:'11px',color:'var(--muted)',marginTop:'4px'}},'Details →')
+  );
+  el.onclick=()=>{navPush();history.pushState({},'');setState({subpage});};
+  return el;
+}
+
+function getModuleStats(field){
+  // field: 'duration' or 'rounds'
+  const map={};
+  state.data.sessions.forEach(s=>{
+    const val=Number(s[field]);
+    if(!val)return;
+    const key=(s.modules&&s.modules.length>0)?[...s.modules].sort().join(' + '):'Kein Modul';
+    if(!map[key])map[key]={total:0,count:0};
+    map[key].total+=val;
+    map[key].count++;
+  });
+  return Object.entries(map)
+    .map(([key,{total,count}])=>({key,avg:Math.round(total/count),count}))
+    .sort((a,b)=>b.avg-a.avg);
+}
+
+function renderModuleStats(field){
+  const isDur=field==='duration';
+  const title=isDur?'⏱ DAUER PRO MODULKOMBINATION':'🔄 RUNDEN PRO MODULKOMBINATION';
+  const unit=isDur?'Min.':'Runden';
+  const entries=getModuleStats(field);
+  const max=entries[0]?.avg||1;
+
+  return h('div',{},
+    h('div',{className:'back-btn',onclick:()=>setState({subpage:null})},'← Zurück'),
+    h('div',{className:'page-title',style:{marginBottom:'6px'}},title),
+    h('div',{style:{fontSize:'13px',color:'var(--muted)',marginBottom:'18px'}},`Durchschnitt ${isDur?'Spieldauer':'Rundenanzahl'} je Versionskombination`),
+    h('div',{className:'card'},
+      entries.length===0?h('div',{style:{color:'var(--muted)'}},'Noch keine Daten mit '+unit+' vorhanden.')
+      :h('div',{},...entries.map(({key,avg,count},i)=>h('div',{className:'rank-item'},
+          h('div',{className:`rank-num ${i===0?'gold':i===1?'silver':i===2?'bronze':''}`},`${i+1}.`),
+          h('div',{style:{flex:1}},
+            h('div',{className:'rank-name'},key),
+            h('div',{className:'rank-sub'},`${count} Session${count!==1?'s':''}`)
+          ),
+          h('div',{className:'rank-bar-wrap'},h('div',{className:'rank-bar',style:{width:`${Math.round(avg/max*100)}%`}})),
+          h('div',{className:'rank-score'},`Ø ${avg} ${unit}`)
+        )))
+    )
+  );
+}
+
+function top3Card(title,entries,rankingPage){
+  const card=h('div',{className:'card',style:{cursor:'pointer'}},
+    h('div',{className:'card-title'},title),
+    entries.length===0?h('div',{style:{color:'var(--muted)',fontSize:'14px'}},'Noch keine Daten')
+    :h('div',{},...entries.map(([name,count],i)=>h('div',{className:'top3-row'},
+        h('div',{className:'top3-medal'},medal(i)),
+        h('div',{className:'top3-name'},name),
+        h('div',{className:'top3-count'},`${count}×`)
+      ))),
+    entries.length>0?h('div',{style:{fontSize:'12px',color:'var(--muted)',marginTop:'10px'}},'Alle anzeigen →'):null
+  );
+  card.onclick=()=>{navPush();history.pushState({},'');setState({subpage:rankingPage});};
+  return card;
+}
+
+function renderRanking(title,entries){
+  const max=entries[0]?.[1]||1;
+  return h('div',{},
+    h('div',{className:'back-btn',onclick:()=>setState({subpage:null})},'← Zurück'),
+    h('div',{className:'page-title',style:{marginBottom:'18px'}},title),
+    h('div',{className:'card'},
+      entries.length===0?h('div',{style:{color:'var(--muted)'}},'Keine Daten vorhanden.')
+      :h('div',{},...entries.map(([name,count],i)=>h('div',{className:'rank-item'},
+          h('div',{className:`rank-num ${i===0?'gold':i===1?'silver':i===2?'bronze':''}`},medal(i)),
+          h('div',{className:'rank-name'},name),
+          h('div',{className:'rank-bar-wrap'},h('div',{className:'rank-bar',style:{width:`${Math.round(count/max*100)}%`}})),
+          h('div',{className:'rank-score'},`${count}×`)
+        )))
+    )
+  );
+}
+
+function renderPlayerRanking(){
+  const players=getPlayerStrength();
+  const maxStr=players[0]?.strength||1;
+  return h('div',{},
+    h('div',{className:'back-btn',onclick:()=>setState({subpage:null})},'← Zurück'),
+    h('div',{className:'page-title',style:{marginBottom:'6px'}},'💪 SPIELER-STÄRKE RANKING'),
+    h('div',{style:{fontSize:'13px',color:'var(--muted)',marginBottom:'18px'}},'Stärke = Siege × Spieleranzahl × log₂(Spieleranzahl) — größere Runden zählen mehr'),
+    h('div',{className:'card'},
+      players.length===0?h('div',{style:{color:'var(--muted)'}},'Noch keine Daten.')
+      :h('div',{},...players.map(({name,strength,wins,games},i)=>h('div',{className:'rank-item'},
+          h('div',{className:`rank-num ${i===0?'gold':i===1?'silver':i===2?'bronze':''}`},medal(i)),
+          h('div',{style:{flex:1}},
+            h('div',{className:'rank-name'},name),
+            h('div',{className:'rank-sub'},`${wins} Siege / ${games} Spiele`)
+          ),
+          h('div',{className:'rank-bar-wrap'},h('div',{className:'rank-bar',style:{width:`${Math.round(strength/maxStr*100)}%`}})),
+          h('div',{className:'rank-score'},`${strength}`)
+        )))
+    )
+  );
+}
+
+// ── SESSIONS ───────────────────────────────────────────────────────────────────
+function sessionRow(session,minimal){
+  const el=h('div',{className:'session-card'},
+    h('div',{className:'session-row'},
+      h('div',{},
+        h('span',{style:{fontWeight:'600',marginRight:'10px'}},session.date),
+        ...(session.modules||[]).map(m=>mkTag('tag-gold',m)),
+        session.testType?mkTag('tag-accent',session.testType):null
+      ),
+      h('div',{className:'session-meta'},
+        session.playerCount?`👥 ${session.playerCount}`:null,
+        session.duration?`⏱ ${session.duration} Min.`:null,
+        session.rounds?`🔄 ${session.rounds} Rd.`:null,
+        session.winner?h('span',{style:{color:'var(--green)'}},`🏆 ${session.winner}`):null
+      )
+    )
+  );
+  if(!minimal)el.onclick=()=>{navPush();history.pushState({},'');setState({subpage:'session-detail',subpageArg:session.id});};
+  return el;
+}
+
+function renderSessionsPage(){
+  if(state.subpage==='session-detail'){
+    const session=state.data.sessions.find(s=>s.id===state.subpageArg);
+    if(!session){setState({subpage:null});return h('div',{});}
+    return renderSessionDetail(session);
+  }
+  const els=[];
+  const hasDraft=!!state.formDraft;
+  els.push(h('div',{className:'page-header'},
+    h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},
+      h('div',{className:'page-title'},'SESSIONS'),
+      hasDraft&&!state.showNewSession?h('span',{className:'form-draft-badge'},'Entwurf offen'):null
+    ),
+    h('div',{style:{display:'flex',gap:'8px',flexWrap:'wrap'}},
+      state.data.sessions.length>0?h('button',{className:'btn-replay',onclick:()=>{
+        const last=state.data.sessions[0];
+        setState({showNewSession:true,replaySession:last,formDraft:null});
+      }},'🔄 Nochmal spielen'):null,
+      h('button',{className:'btn-primary',onclick:()=>setState({showNewSession:true,formDraft:null,replaySession:null})},'+ Neues Spiel')
+    )
+  ));
+  if(state.showNewSession)els.push(renderNewSessionForm(state.replaySession));
+  if(state.data.sessions.length===0&&!state.showNewSession){
+    els.push(h('div',{className:'empty'},
+      h('div',{className:'empty-icon'},'🎲'),
+      h('div',{className:'empty-text'},'Noch keine Sessions gespeichert.'),
+      h('button',{className:'btn-primary',onclick:()=>setState({showNewSession:true})},'Erste Session eintragen')
+    ));
+  } else{
+    state.data.sessions.forEach(s=>els.push(sessionRow(s,false)));
+  }
+  return h('div',{},...els);
+}
+
+function renderSessionDetail(session){
+  if(state.editingSession===session.id)return renderEditSessionForm(session);
+  const hasSpecial=session.modules?.includes('Spezialfähigkeiten');
+  return h('div',{},
+    h('div',{style:{display:'flex',gap:'10px',alignItems:'center',marginBottom:'18px',flexWrap:'wrap'}},
+      h('div',{className:'back-btn',onclick:()=>setState({subpage:null,subpageArg:null})},'← Zurück'),
+      h('div',{className:'page-title'},`Session ${session.date}`),
+      h('div',{style:{flex:'1'}}),
+      h('button',{className:'btn-sm',onclick:()=>setState({editingSession:session.id})},'✏ Bearbeiten'),
+      h('button',{className:'btn-danger',onclick:()=>{
+        if(confirm('Session wirklich löschen?')){
+          persist({...state.data,sessions:state.data.sessions.filter(s=>s.id!==session.id)});
+          setState({subpage:null,subpageArg:null,editingSession:null});
+        }
+      }},'Löschen')
+    ),
+    h('div',{className:'card'},
+      h('div',{className:'grid2'},
+        iF('Datum',session.date),iF('Dauer',session.duration?`${session.duration} Min.`:'—'),
+        iF('Spieleranzahl',session.playerCount),iF('Runden',session.rounds||'—'),
+        iF('Testtyp',session.testType||'—'),iF('Gewinner',session.winner||'—')
+      ),
+      session.modules?.length?h('div',{style:{marginTop:'12px'}},
+        h('div',{className:'info-lbl'},'AKTIVE MODULE'),
+        h('div',{},...(session.modules||[]).map(m=>mkTag('tag-gold',m)))
+      ):null,
+      session.notes?h('div',{style:{marginTop:'12px'}},
+        h('div',{className:'info-lbl'},'BEMERKUNGEN'),
+        h('div',{style:{fontSize:'15px',lineHeight:'1.6'}},session.notes)
+      ):null
+    ),
+    session.playerSlots?.length?h('div',{className:'card'},
+      h('div',{className:'card-title'},'SPIELER & CHARAKTERE'),
+      ...session.playerSlots.map(slot=>h('div',{style:{borderBottom:'1px solid var(--border)',paddingBottom:'12px',marginBottom:'12px'}},
+        h('div',{style:{display:'flex',gap:'10px',flexWrap:'wrap',marginBottom:'6px',alignItems:'center'}},
+          h('span',{style:{fontWeight:'600'}},slot.anonymous?'👤 Anonym':slot.player||'—'),
+          slot.character?mkTag('tag-accent',slot.character):null,
+          slot.isWinner?mkTag('tag-green','🏆 Gewinner'):null
+        ),
+        hasSpecial&&slot.abilities?.length?h('div',{},
+          h('span',{style:{fontSize:'11px',letterSpacing:'.1em',color:'var(--muted)',textTransform:'uppercase'}},'Fähigkeiten: '),
+          ...slot.abilities.map(a=>mkTag('tag-gold',a))
+        ):null
+      ))
+    ):null
+  );
+}
+
+function iF(label,value){return h('div',{className:'info-pair'},h('div',{className:'info-lbl'},label),h('div',{className:'info-val'},String(value??'—')));}
+
+// ── SESSION FORM (shared for new + replay) ────────────────────────────────────
+function makeDefaultFd(replay){
+  const d=state.data;
+  const defaultTestType=d.testTypes.find(t=>t.name==='Selbst mitgespielt')?.name||d.testTypes[0]?.name||'';
+  const defaultModules=d.versions.filter(v=>v.name==='Basisspiel'&&v.active!==false).map(v=>v.name);
+  if(replay){
+    return{
+      date:new Date().toISOString().split('T')[0],
+      playerCount:replay.playerCount||2,
+      rounds:'',duration:'',
+      testType:replay.testType||defaultTestType,
+      modules:[...(replay.modules||defaultModules)],
+      notes:'',
+      playerSlots:replay.playerSlots?.map(s=>({player:s.player,character:s.character,abilities:[],isWinner:false}))||Array.from({length:replay.playerCount||2},()=>({player:'',character:'',abilities:[],isWinner:false})),
+    };
+  }
+  return{
+    date:new Date().toISOString().split('T')[0],playerCount:2,rounds:'',duration:'',
+    testType:defaultTestType,modules:defaultModules,notes:'',
+    playerSlots:Array.from({length:2},()=>({player:'',character:'',abilities:[],isWinner:false,anonymous:false})),
+  };
+}
+
+function renderNewSessionForm(replay){
+  const fd=state.formDraft&&!replay?state.formDraft:makeDefaultFd(replay||null);
+  function saveDraft(){state.formDraft=JSON.parse(JSON.stringify(fd));}
+
+  const data=state.data;
+  const activeChars=[...data.characters].filter(c=>c.active!==false).sort((a,b)=>a.name.localeCompare(b.name));
+  const activeAbils=data.abilities.filter(a=>a.active!==false);
+  const activePlayers=data.players.filter(p=>p.active!==false);
+  const activeVersions=data.versions.filter(v=>v.active!==false);
+  const activeTestTypes=data.testTypes.filter(t=>t.active!==false);
+
+  function getCharAbilIds(charName){const char=data.characters.find(c=>c.name===charName);if(!char)return[];return data.characterAbilities[char.id]||[];}
+  function getCharAbilNames(charName){return getCharAbilIds(charName).map(id=>data.abilities.find(a=>a.id===id)?.name).filter(Boolean);}
+  function getOtherAbilNames(charName){const assigned=getCharAbilIds(charName);return activeAbils.filter(a=>!assigned.includes(a.id)).map(a=>a.name);}
+
+  // Build the entire form as innerHTML – stable DOM, no rebuild on select change
+  const wrap=document.createElement('div');
+  wrap.className='card';
+  wrap.style.marginBottom='16px';
+
+  function renderForm(){
+    const hasSpecial=fd.modules.includes('Spezialfähigkeiten');
+
+    let slotsHTML=fd.playerSlots.map((slot,i)=>{
+      const ca=hasSpecial?getCharAbilNames(slot.character):[];
+      const otherAbils=hasSpecial&&slot.character?getOtherAbilNames(slot.character):[];
+      const playerOpts=activePlayers.map(p=>`<option value="${p.name}"${slot.player===p.name?' selected':''}>${p.name}</option>`).join('');
+      const charOpts=activeChars.map(c=>`<option value="${c.name}"${slot.character===c.name?' selected':''}>${c.name}</option>`).join('');
+      const caChips=ca.map(a=>`<span class="chip${slot.abilities.includes(a)?' active':''}" data-abil="${a}" data-slot="${i}">${a}</span>`).join('');
+      const otherChips=otherAbils.map(a=>`<span class="chip${slot.abilities.includes(a)?' other-active':''}" data-other-abil="${a}" data-slot="${i}">${a}</span>`).join('');
+      return `
+        <div class="player-slot">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:flex-end;">
+            <div style="flex:1;min-width:110px;">
+              <label class="lbl">Spieler ${i+1}${slot.player?` <span style="color:var(--green);font-size:11px;">✓ ${slot.player}</span>`:''}</label>
+              ${slot.anonymous
+                ?`<div style="display:flex;gap:6px;align-items:center;">
+                    <span style="flex:1;background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--muted);font-style:italic;">Anonym</span>
+                    <button class="btn-sm" data-deanon="${i}">✕</button>
+                  </div>`
+                :`<div style="display:flex;gap:6px;">
+                    <select data-player-sel="${i}" style="flex:1;">
+                      <option value="">— wählen —</option>${playerOpts}
+                    </select>
+                    <button class="btn-sm" data-anon="${i}">👤 Anon</button>
+                    <button class="btn-add-inline" data-addplayer="${i}">+</button>
+                  </div>`
+              }
+            </div>
+            <div style="flex:1;min-width:110px;">
+              <label class="lbl">Charakter</label>
+              <select data-char-select="${i}">
+                <option value="__any__">— Irgendeine —</option>${charOpts}
+              </select>
+            </div>
+            <button class="btn-sm${slot.isWinner?' active':''}" data-winner="${i}" style="margin-bottom:1px;">${slot.isWinner?'🏆 Gewinner':'Gewinner?'}</button>
+          </div>
+          ${hasSpecial&&slot.character?`
+            ${ca.length>0?`<div><label class="lbl">Genutzte Fähigkeiten</label>${caChips}</div>`:''}
+            ${otherAbils.length>0?`
+              <div style="margin-top:6px;">
+                <button class="btn-other" data-other-toggle="${i}">▶ Andere Fähigkeiten (nicht zugeordnet)</button>
+                <div data-other-panel="${i}" style="display:none;" class="other-panel">${otherChips}</div>
+              </div>`:''}
+            ${ca.length===0&&otherAbils.length===0?`<div style="font-size:12px;color:var(--muted);">Keine Fähigkeiten vorhanden.</div>`:''}
+          `:''}
+        </div>`;
+    }).join('');
+
+    const modChips=activeVersions.map(v=>`<span class="chip${fd.modules.includes(v.name)?' active':''}" data-mod="${v.name}">${v.name}</span>`).join('');
+    const testOpts=activeTestTypes.map(t=>`<option value="${t.name}"${fd.testType===t.name?' selected':''}>${t.name}</option>`).join('');
+    const countBtns=[2,3,4,5,6,7,8].map(n=>`<button class="btn-sm${fd.playerCount===n?' active':''}" data-count="${n}">${n}</button>`).join('');
+
+    wrap.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div class="card-title" style="margin-bottom:0;">${replay?'🔄 NOCHMAL SPIELEN':'NEUE SESSION'}</div>
+        ${state.formDraft&&!replay?'<span class="form-draft-badge">Entwurf</span>':''}
+      </div>
+      <div class="grid2" style="margin-bottom:14px;">
+        <div class="field"><label class="lbl">Datum</label><input type="date" id="fd-date" value="${fd.date}"></div>
+        <div class="field"><label class="lbl">Testtyp</label><select id="fd-testtype"><option value="">— wählen —</option>${testOpts}</select></div>
+        <div class="field"><label class="lbl">Anzahl Runden</label><input type="number" id="fd-rounds" min="1" placeholder="z.B. 8" value="${fd.rounds}"></div>
+        <div class="field"><label class="lbl">Dauer (Min.)</label><input type="number" id="fd-duration" min="1" placeholder="z.B. 60" value="${fd.duration}"></div>
+      </div>
+      <div class="field"><label class="lbl">Spieleranzahl</label><div class="btn-row">${countBtns}</div></div>
+      <div class="field"><label class="lbl">Aktive Module</label><div>${modChips}</div></div>
+      <div class="field"><label class="lbl">Spieler & Charaktere</label>${slotsHTML}</div>
+      <div class="field"><label class="lbl">Bemerkungen</label><textarea id="fd-notes" placeholder="Beobachtungen, Ideen…">${fd.notes}</textarea></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-primary" id="fd-save">Session speichern →</button>
+        <button class="btn-secondary" id="fd-cancel">Abbrechen</button>
+      </div>`;
+
+    // Attach events
+    wrap.querySelector('#fd-date').oninput=e=>{fd.date=e.target.value;saveDraft();};
+    wrap.querySelector('#fd-testtype').onchange=e=>{fd.testType=e.target.value;saveDraft();};
+    wrap.querySelector('#fd-rounds').oninput=e=>{fd.rounds=e.target.value;saveDraft();};
+    wrap.querySelector('#fd-duration').oninput=e=>{fd.duration=e.target.value;saveDraft();};
+    wrap.querySelector('#fd-notes').oninput=e=>{fd.notes=e.target.value;saveDraft();};
+
+    wrap.querySelector('#fd-save').onclick=()=>{
+      const ws=fd.playerSlots.find(s=>s.isWinner);
+      const winnerName=ws?.anonymous?'Anonym':ws?.player||'';
+      const winner=ws?[winnerName,ws.character&&ws.character!=='__any__'?`(${ws.character})`:null].filter(Boolean).join(' '):'';
+      const session={id:uid(),date:fd.date,playerCount:Number(fd.playerCount),rounds:Number(fd.rounds)||0,duration:Number(fd.duration)||0,testType:fd.testType,modules:[...fd.modules],notes:fd.notes,winner,playerSlots:fd.playerSlots.map(s=>({...s,character:s.character==='__any__'?'':s.character,abilities:[...s.abilities]}))};
+      persist({...state.data,sessions:[session,...state.data.sessions]});
+      setState({showNewSession:false,replaySession:null,formDraft:null});
+    };
+    wrap.querySelector('#fd-cancel').onclick=()=>setState({showNewSession:false,replaySession:null});
+
+    // Count buttons
+    wrap.querySelectorAll('[data-count]').forEach(btn=>btn.onclick=()=>{
+      fd.playerCount=Number(btn.dataset.count);
+      while(fd.playerSlots.length<fd.playerCount)fd.playerSlots.push({player:'',character:'',abilities:[],isWinner:false,anonymous:false});
+      fd.playerSlots=fd.playerSlots.slice(0,fd.playerCount);
+      saveDraft();renderForm();
+    });
+
+    // Module chips
+    wrap.querySelectorAll('[data-mod]').forEach(el=>el.onclick=()=>{
+      const name=el.dataset.mod;
+      fd.modules=fd.modules.includes(name)?fd.modules.filter(m=>m!==name):[...fd.modules,name];
+      saveDraft();renderForm();
+    });
+
+    // Player selects
+    wrap.querySelectorAll('[data-player-sel]').forEach(sel=>{
+      sel.oninput=function(){
+        const i=Number(this.dataset.playerSel);
+        fd.playerSlots[i].player=this.value;
+        saveDraft();
+        renderForm();
+      };
+    });
+
+    // Char selects
+    wrap.querySelectorAll('[data-char-select]').forEach(sel=>{
+      sel.onchange=function(){
+        const i=Number(this.dataset.charSelect);
+        fd.playerSlots[i].character=this.value==='__any__'?'':this.value;
+        fd.playerSlots[i].abilities=[];
+        saveDraft();renderForm();
+      };
+    });
+
+    // Winner buttons
+    wrap.querySelectorAll('[data-winner]').forEach(btn=>btn.onclick=()=>{
+      const i=Number(btn.dataset.winner);
+      fd.playerSlots.forEach((s,idx)=>s.isWinner=idx===i);
+      saveDraft();renderForm();
+    });
+
+    // Anon buttons
+    wrap.querySelectorAll('[data-anon]').forEach(btn=>btn.onclick=()=>{
+      const i=Number(btn.dataset.anon);
+      fd.playerSlots[i].anonymous=true;fd.playerSlots[i].player='';
+      saveDraft();renderForm();
+    });
+    wrap.querySelectorAll('[data-deanon]').forEach(btn=>btn.onclick=()=>{
+      const i=Number(btn.dataset.deanon);
+      fd.playerSlots[i].anonymous=false;fd.playerSlots[i].player='';
+      saveDraft();renderForm();
+    });
+
+    // Add player inline
+    wrap.querySelectorAll('[data-addplayer]').forEach(btn=>btn.onclick=()=>{
+      const i=Number(btn.dataset.addplayer);
+      const name=prompt('Neuer Spielername:');
+      if(!name||!name.trim())return;
+      const newPlayer={id:uid(),name:name.trim(),active:true};
+      persist({...state.data,players:[...state.data.players,newPlayer]});
+      fd.playerSlots[i].player=name.trim();
+      saveDraft();renderForm();
+    });
+
+    // Ability chips
+    wrap.querySelectorAll('[data-abil]').forEach(el=>el.onclick=()=>{
+      const i=Number(el.dataset.slot),a=el.dataset.abil;
+      const slot=fd.playerSlots[i];
+      slot.abilities=slot.abilities.includes(a)?slot.abilities.filter(x=>x!==a):[...slot.abilities,a];
+      saveDraft();renderForm();
+    });
+
+    // Other ability chips
+    wrap.querySelectorAll('[data-other-abil]').forEach(el=>el.onclick=()=>{
+      const i=Number(el.dataset.slot),a=el.dataset.otherAbil;
+      const slot=fd.playerSlots[i];
+      if(!slot.abilities.includes(a))slot.abilities.push(a);
+      const charObj=data.characters.find(c=>c.name===slot.character);
+      const abilObj=data.abilities.find(x=>x.name===a);
+      if(charObj&&abilObj){
+        const cur=data.characterAbilities[charObj.id]||[];
+        if(!cur.includes(abilObj.id))persist({...state.data,characterAbilities:{...data.characterAbilities,[charObj.id]:[...cur,abilObj.id]}});
+      }
+      saveDraft();renderForm();
+    });
+
+    // Other panel toggles
+    wrap.querySelectorAll('[data-other-toggle]').forEach(btn=>{
+      const i=btn.dataset.otherToggle;
+      const panel=wrap.querySelector(`[data-other-panel="${i}"]`);
+      btn.onclick=()=>{
+        const open=panel.style.display==='block';
+        panel.style.display=open?'none':'block';
+        btn.textContent=(open?'▶':'▼')+' Andere Fähigkeiten (nicht zugeordnet)';
+      };
+    });
+  }
+
+  renderForm();
+  return wrap;
+}
+
+// ── EDIT SESSION FORM ──────────────────────────────────────────────────────────
+function renderEditSessionForm(existing){
+  const data=state.data;
+  const fd={
+    date:existing.date,playerCount:existing.playerCount||2,rounds:existing.rounds||'',
+    duration:existing.duration||'',testType:existing.testType||'',
+    modules:[...(existing.modules||[])],notes:existing.notes||'',
+    playerSlots:existing.playerSlots?.map(s=>({...s,abilities:[...(s.abilities||[])]}))
+      ||Array.from({length:existing.playerCount||2},()=>({player:'',character:'',abilities:[],isWinner:false})),
+  };
+
+  const activeChars=[...data.characters].filter(c=>c.active!==false).sort((a,b)=>a.name.localeCompare(b.name));
+  const activeAbils=data.abilities.filter(a=>a.active!==false);
+  const activePlayers=data.players.filter(p=>p.active!==false);
+  const activeVersions=data.versions.filter(v=>v.active!==false);
+  const activeTestTypes=data.testTypes.filter(t=>t.active!==false);
+
+  function getCharAbilNames(charName){
+    const char=data.characters.find(c=>c.name===charName);
+    if(!char)return[];
+    return(data.characterAbilities[char.id]||[]).map(id=>data.abilities.find(a=>a.id===id)?.name).filter(Boolean);
+  }
+  function updateCount(n){
+    fd.playerCount=n;
+    while(fd.playerSlots.length<n)fd.playerSlots.push({player:'',character:'',abilities:[],isWinner:false});
+    fd.playerSlots=fd.playerSlots.slice(0,n);rebuild();
+  }
+  function toggleMod(name){fd.modules=fd.modules.includes(name)?fd.modules.filter(m=>m!==name):[...fd.modules,name];rebuild();}
+  function setWinner(i){fd.playerSlots.forEach((s,idx)=>s.isWinner=idx===i);rebuild();}
+  function toggleAbil(si,an){const slot=fd.playerSlots[si];slot.abilities=slot.abilities.includes(an)?slot.abilities.filter(a=>a!==an):[...slot.abilities,an];rebuild();}
+
+  function build(){
+    const hasSpecial=fd.modules.includes('Spezialfähigkeiten');
+    const wrap=h('div',{},
+      h('div',{style:{display:'flex',gap:'10px',alignItems:'center',marginBottom:'18px',flexWrap:'wrap'}},
+        h('div',{className:'back-btn',onclick:()=>setState({editingSession:null})},'← Abbrechen'),
+        h('div',{className:'page-title'},'SESSION BEARBEITEN'),
+      ),
+      h('div',{className:'card'},
+        h('div',{className:'grid2',style:{marginBottom:'14px'}},
+          h('div',{className:'field'},h('label',{className:'lbl'},'Datum'),(()=>{const el=h('input',{type:'date',value:fd.date});el.oninput=e=>{fd.date=e.target.value;};return el;})()),
+          h('div',{className:'field'},h('label',{className:'lbl'},'Testtyp'),(()=>{const el=h('select',{},...[h('option',{value:''},'— wählen —'),...activeTestTypes.map(t=>{const o=h('option',{value:t.name},t.name);if(fd.testType===t.name)o.selected=true;return o;})]);el.onchange=e=>{fd.testType=e.target.value;};return el;})()),
+          h('div',{className:'field'},h('label',{className:'lbl'},'Anzahl Runden'),(()=>{const el=h('input',{type:'number',min:'1',value:fd.rounds});el.oninput=e=>{fd.rounds=e.target.value;};return el;})()),
+          h('div',{className:'field'},h('label',{className:'lbl'},'Dauer (Min.)'),(()=>{const el=h('input',{type:'number',min:'1',value:fd.duration});el.oninput=e=>{fd.duration=e.target.value;};return el;})()),
+        ),
+        h('div',{className:'field'},h('label',{className:'lbl'},'Spieleranzahl'),
+          h('div',{className:'btn-row'},...[2,3,4,5,6,7,8].map(n=>{
+            const btn=h('button',{className:'btn-sm'+(fd.playerCount===n?' active':'')},String(n));
+            btn.onclick=()=>updateCount(n);return btn;
+          }))
+        ),
+        h('div',{className:'field'},h('label',{className:'lbl'},'Aktive Module'),
+          h('div',{},...activeVersions.map(v=>{
+            const el=h('span',{className:'chip'+(fd.modules.includes(v.name)?' active':'')},v.name);
+            el.onclick=()=>toggleMod(v.name);return el;
+          }))
+        ),
+        h('div',{className:'field'},h('label',{className:'lbl'},'Spieler & Charaktere'),
+          ...fd.playerSlots.map((slot,i)=>{
+            const ca=hasSpecial?getCharAbilNames(slot.character):[];
+            return h('div',{className:'player-slot'},
+              h('div',{style:{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'8px',alignItems:'flex-end'}},
+                h('div',{style:{flex:'1',minWidth:'110px'}},h('label',{className:'lbl'},`Spieler ${i+1}`),
+                  (()=>{const el=h('select',{},...[h('option',{value:''},'— wählen —'),...activePlayers.map(p=>{const o=h('option',{value:p.name},p.name);if(slot.player===p.name)o.selected=true;return o;})]);el.onchange=e=>{slot.player=e.target.value;};return el;})()),
+                h('div',{style:{flex:'1',minWidth:'110px'}},h('label',{className:'lbl'},'Charakter'),
+                  (()=>{const el=h('select',{},...[h('option',{value:''},'— wählen —'),...activeChars.map(c=>{const o=h('option',{value:c.name},c.name);if(slot.character===c.name)o.selected=true;return o;})]);el.onchange=e=>{slot.character=e.target.value;slot.abilities=[];rebuild();};return el;})()),
+                (()=>{const btn=h('button',{className:'btn-sm'+(slot.isWinner?' active':''),style:{marginBottom:'1px'}},slot.isWinner?'🏆 Gewinner':'Gewinner?');btn.onclick=()=>setWinner(i);return btn;})()
+              ),
+              hasSpecial&&slot.character&&ca.length>0?h('div',{},
+                h('label',{className:'lbl'},'Genutzte Fähigkeiten'),
+                ...ca.map(a=>{const el=h('span',{className:'chip'+(slot.abilities.includes(a)?' active':'')},a);el.onclick=()=>toggleAbil(i,a);return el;})
+              ):null
+            );
+          })
+        ),
+        h('div',{className:'field'},h('label',{className:'lbl'},'Bemerkungen'),
+          (()=>{const el=h('textarea',{placeholder:'Beobachtungen, Ideen…'},fd.notes);el.oninput=e=>{fd.notes=e.target.value;};return el;})()
+        ),
+        h('div',{style:{display:'flex',gap:'10px'}},
+          (()=>{const btn=h('button',{className:'btn-primary'},'Änderungen speichern →');btn.onclick=()=>{
+            const ws=fd.playerSlots.find(s=>s.isWinner);
+            const winner=ws?[ws.player,ws.character?`(${ws.character})`:null].filter(Boolean).join(' '):'';
+            const updated={...existing,date:fd.date,playerCount:Number(fd.playerCount),rounds:Number(fd.rounds)||0,duration:Number(fd.duration)||0,testType:fd.testType,modules:[...fd.modules],notes:fd.notes,winner,playerSlots:fd.playerSlots.map(s=>({...s,abilities:[...s.abilities]}))};
+            persist({...state.data,sessions:state.data.sessions.map(s=>s.id===existing.id?updated:s)});
+            setState({editingSession:null});
+          };return btn;})(),
+          (()=>{const btn=h('button',{className:'btn-secondary'},'Abbrechen');btn.onclick=()=>setState({editingSession:null});return btn;})()
+        )
+      )
+    );
+    return wrap;
+  }
+  let formEl=build();
+  function rebuild(){const n=build();formEl.replaceWith(n);formEl=n;}
+  return formEl;
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────────
+function renderAdmin(){
+  const tabs=[['characters','Charaktere'],['abilities','Fähigkeiten'],['charAbilities','Zuordnung'],['players','Spieler'],['versions','Versionen'],['testTypes','Testtypen']];
+  const tabBar=h('div',{className:'tab-bar'},...tabs.map(([id,label])=>{
+    const btn=h('button',{className:'btn-sm'+(state.adminTab===id?' active':'')},label);
+    btn.onclick=()=>setState({adminTab:id});return btn;
+  }));
+  const d=state.data;
+  let content;
+  if(state.adminTab==='characters')content=listEditor('Charaktere','characters',d.characters,true);
+  else if(state.adminTab==='abilities')content=listEditor('Spezialfähigkeiten','abilities',d.abilities,true);
+  else if(state.adminTab==='charAbilities')content=renderCharAbilEditor();
+  else if(state.adminTab==='players')content=listEditor('Spieler','players',d.players,true);
+  else if(state.adminTab==='versions')content=listEditor('Versionen / Module','versions',d.versions,false);
+  else if(state.adminTab==='testTypes')content=listEditor('Testtypen','testTypes',d.testTypes,false);
+  return h('div',{},h('div',{className:'page-title',style:{marginBottom:'20px'}},'VERWALTUNG'),tabBar,content);
+}
+
+function listEditor(title,field,items,withActive){
+  const input=h('input',{type:'text',placeholder:'Neuer Eintrag…',style:{flex:'1'}});
+  const addBtn=h('button',{className:'btn-primary'},'+ Hinzufügen');
+  addBtn.onclick=()=>{const name=input.value.trim();if(!name)return;persist({...state.data,[field]:[...items,{id:uid(),name,active:true}]});input.value='';};
+  input.onkeydown=e=>{if(e.key==='Enter')addBtn.onclick();};
+
+  // Count how many sessions reference an item by name in a given field
+  function countSessionRefs(oldName,sessionField){
+    return state.data.sessions.filter(s=>{
+      if(sessionField==='modules')return s.modules?.includes(oldName);
+      if(sessionField==='testType')return s.testType===oldName;
+      if(sessionField==='players')return s.playerSlots?.some(p=>p.player===oldName);
+      if(sessionField==='characters')return s.playerSlots?.some(p=>p.character===oldName);
+      if(sessionField==='abilities')return s.playerSlots?.some(p=>p.abilities?.includes(oldName));
+      return false;
+    }).length;
+  }
+
+  // Map field name to session field for retroactive updates
+  const sessionFieldMap={characters:'characters',abilities:'abilities',players:'players',versions:'modules',testTypes:'testType'};
+
+  function renameInSessions(oldName,newName,sessionField){
+    return state.data.sessions.map(s=>{
+      if(sessionField==='modules')return{...s,modules:s.modules?.map(m=>m===oldName?newName:m)};
+      if(sessionField==='testType')return{...s,testType:s.testType===oldName?newName:s.testType};
+      if(sessionField==='players')return{...s,
+        playerSlots:s.playerSlots?.map(p=>({...p,player:p.player===oldName?newName:p.player})),
+        winner:s.winner?.replace(oldName,newName)
+      };
+      if(sessionField==='characters')return{...s,
+        playerSlots:s.playerSlots?.map(p=>({...p,character:p.character===oldName?newName:p.character})),
+        winner:s.winner?.replace(oldName,newName)
+      };
+      if(sessionField==='abilities')return{...s,
+        playerSlots:s.playerSlots?.map(p=>({...p,abilities:p.abilities?.map(a=>a===oldName?newName:a)}))
+      };
+      return s;
+    });
+  }
+
+  return h('div',{className:'card'},
+    h('div',{className:'card-title'},title.toUpperCase()),
+    ...items.map(item=>{
+      const isActive=item.active!==false;
+      const nameInput=h('input',{type:'text',value:item.name,style:{flex:'1',fontSize:'14px',padding:'5px 9px'}});
+      const sessionField=sessionFieldMap[field];
+      const saveBtn=h('button',{className:'btn-sm'},'✓');
+      saveBtn.onclick=()=>{
+        const newName=nameInput.value.trim();
+        if(!newName||newName===item.name)return;
+        const refs=sessionField?countSessionRefs(item.name,sessionField):0;
+        if(refs>0&&!confirm(`„${item.name}" wird in ${refs} Session${refs!==1?'s':''} verwendet. Überall umbenennen zu „${newName}"?`))return;
+        let newData={...state.data,[field]:items.map(i=>i.id===item.id?{...i,name:newName}:i)};
+        if(refs>0&&sessionField)newData={...newData,sessions:renameInSessions(item.name,newName,sessionField)};
+        persist(newData);
+      };
+      return h('div',{style:{display:'flex',alignItems:'center',padding:'9px 0',borderBottom:'2px solid var(--border)',gap:'8px',flexWrap:'wrap'}},
+        h('div',{style:{display:'flex',gap:'6px',flex:'1',minWidth:'160px',opacity:isActive?'1':'0.5'}},
+          nameInput,saveBtn
+        ),
+        h('div',{style:{display:'flex',gap:'6px'}},
+          withActive?(()=>{
+            const btn=h('button',{className:'btn-sm'},isActive?'Inaktiv':'Aktiv');
+            btn.onclick=()=>persist({...state.data,[field]:items.map(i=>i.id===item.id?{...i,active:!isActive}:i)});
+            return btn;
+          })():null,
+          (()=>{const btn=h('button',{className:'btn-danger'},'✕');btn.onclick=()=>{if(confirm(`„${item.name}" wirklich entfernen?`))persist({...state.data,[field]:items.filter(i=>i.id!==item.id)});};return btn;})()
+        )
+      );
+    }),
+    h('div',{style:{display:'flex',gap:'10px',marginTop:'14px'}},input,addBtn)
+  );
+}
+
+function renderCharAbilEditor(){
+  const{characters,abilities,characterAbilities}=state.data;
+  const activeChars=[...characters].filter(c=>c.active!==false).sort((a,b)=>a.name.localeCompare(b.name));
+  const activeAbils=abilities.filter(a=>a.active!==false);
+  return h('div',{className:'card'},
+    h('div',{className:'card-title'},'CHARAKTER → SPEZIALFÄHIGKEITEN'),
+    h('p',{style:{fontSize:'13px',color:'var(--muted)',marginBottom:'16px'}},'Wähle für jeden Charakter seine verfügbaren Spezialfähigkeiten.'),
+    ...activeChars.map(char=>h('div',{style:{marginBottom:'16px',paddingBottom:'16px',borderBottom:'2px solid var(--border)'}},
+      h('div',{style:{fontWeight:'700',marginBottom:'8px',color:'var(--purple)'}},char.name),
+      ...activeAbils.map(abil=>{
+        const active=(characterAbilities[char.id]||[]).includes(abil.id);
+        const el=h('span',{className:'chip'+(active?' active':'')},abil.name);
+        el.onclick=()=>{
+          const cur=characterAbilities[char.id]||[];
+          const updated=active?cur.filter(a=>a!==abil.id):[...cur,abil.id];
+          persist({...state.data,characterAbilities:{...characterAbilities,[char.id]:updated}});
+        };
+        return el;
+      })
+    ))
+  );
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');
+  app.innerHTML='';
+  const statusText={ok:'✓ Firebase',saving:'Speichert…',err:'⚠ Fehler'}[state.saveStatus];
+  const statusClass={ok:'ok',saving:'saving',err:'err'}[state.saveStatus];
+  const nav=h('nav',{},
+    h('div',{className:'nav-brand'},'🐰⛷️ Skihasen'),
+    ...[['dashboard','Dashboard'],['sessions','Sessions'],['admin','⚙ Verwaltung']].map(([p,label])=>{
+      const btn=h('button',{className:'nav-btn'+(state.page===p?' active':'')},label);
+      btn.onclick=()=>{navPush();history.pushState({},'');setState({page:p,subpage:null,subpageArg:null,showNewSession:false,replaySession:null,editingSession:null});};return btn;
+    }),
+    h('div',{className:`nav-status ${statusClass}`},statusText)
+  );
+  let content;
+  if(state.page==='dashboard'){
+    if(state.subpage==='ranking-char')content=renderRanking('CHARAKTER-SIEGER RANKING',getCharWins());
+    else if(state.subpage==='ranking-ability')content=renderRanking('SPEZIALFÄHIGKEITEN RANKING',getAbilityWins());
+    else if(state.subpage==='ranking-player')content=renderPlayerRanking();
+    else if(state.subpage==='stats-duration')content=renderModuleStats('duration');
+    else if(state.subpage==='stats-rounds')content=renderModuleStats('rounds');
+    else content=renderDashboard();
+  }else if(state.page==='sessions')content=renderSessionsPage();
+  else if(state.page==='admin')content=renderAdmin();
+  app.appendChild(nav);
+  app.appendChild(h('main',{},content));
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+(async()=>{
+  const loaded=await loadFromFirebase();
+  // Migrate old data: add active:true to items that don't have it
+  if(loaded){
+    ['characters','abilities','players','versions','testTypes'].forEach(f=>{
+      if(loaded[f])loaded[f]=loaded[f].map(i=>({active:true,...i}));
+    });
+  }
+  state.data=loaded||JSON.parse(JSON.stringify(DEFAULT_DATA));
+  state.saveStatus='ok';
+  render();
+})();
+</script>
+</body>
+</html>
